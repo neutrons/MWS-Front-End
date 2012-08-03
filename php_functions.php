@@ -46,21 +46,24 @@ if (! defined( 'SUPPORT_DIR'))
 # Note: It should be obvious from all the array_key_exists() calls,
 # but we're expecting several key/value pairs to exist in the ini file and
 # we won't run if they're not there.  These values are used for building up
-# the URL string in the curl calls.
+# the URL string in the curl calls and for the LDAP calls.
 try {  
     $configs = parse_ini_file( SUPPORT_DIR . "/config.ini");
 
-    # verify that the necessary values exist and then
-    # then define constants for them.  (That's probably overkill,
-    # but it doesn't hurt anything...)
-    if ( array_key_exists("MWS_SCHEME", $configs)) { define('MWS_SCHEME', $configs["MWS_SCHEME"]); } else { throw new MissingInitException( "MWS_SCHEME"); }
-    if ( array_key_exists("MWS_HOST",   $configs)) { define('MWS_HOST',   $configs["MWS_HOST"]);   } else { throw new MissingInitException( "MWS_HOST"); }
-    if ( array_key_exists("MWS_PORT",   $configs)) { define('MWS_PORT',   $configs["MWS_PORT"]);   } else { throw new MissingInitException( "MWS_PORT"); }
-    if ( array_key_exists("MWS_BASE",   $configs)) { define('MWS_BASE',   $configs["MWS_BASE"]);   } else { throw new MissingInitException( "MWS_BASE"); }
-    if ( array_key_exists("MWS_USER",   $configs)) { define('MWS_USER',   $configs["MWS_USER"]);   } else { throw new MissingInitException( "MWS_USER"); }
-    if ( array_key_exists("MWS_PASS",   $configs)) { define('MWS_PASS',   $configs["MWS_PASS"]);   } else { throw new MissingInitException( "MWS_PASS"); }
+    # verify that the necessary values exist and then define constants for
+    # them.  (The constants are probably overkill, but they don't hurt
+    # anything...)
+    if ( array_key_exists('MWS_SCHEME', $configs)) { define('MWS_SCHEME', $configs['MWS_SCHEME']); } else { throw new MissingInitException( 'MWS_SCHEME'); }
+    if ( array_key_exists('MWS_HOST',   $configs)) { define('MWS_HOST',   $configs['MWS_HOST']);   } else { throw new MissingInitException( 'MWS_HOST'); }
+    if ( array_key_exists('MWS_PORT',   $configs)) { define('MWS_PORT',   $configs['MWS_PORT']);   } else { throw new MissingInitException( 'MWS_PORT'); }
+    if ( array_key_exists('MWS_BASE',   $configs)) { define('MWS_BASE',   $configs['MWS_BASE']);   } else { throw new MissingInitException( 'MWS_BASE'); }
+    if ( array_key_exists('MWS_USER',   $configs)) { define('MWS_USER',   $configs['MWS_USER']);   } else { throw new MissingInitException( 'MWS_USER'); }
+    if ( array_key_exists('MWS_PASS',   $configs)) { define('MWS_PASS',   $configs['MWS_PASS']);   } else { throw new MissingInitException( 'MWS_PASS'); }
 
-    echo "<hr/>\n";
+    if ( array_key_exists('LDAP_HOST',   $configs)) { define('LDAP_HOST',   $configs['LDAP_HOST']);   } else { throw new MissingInitException( 'LDAP_HOST'); }
+    if ( array_key_exists('LDAP_BASE_DN',   $configs)) { define('LDAP_BASE_DN',   $configs['LDAP_BASE_DN']);   } else { throw new MissingInitException( 'LDAP_BASE_DN'); }
+    if ( array_key_exists('LDAP_FILTER',   $configs)) { define('LDAP_FILTER',   $configs['LDAP_FILTER']);   } else { throw new MissingInitException( 'LDAP_FILTER'); }
+
 } catch (MissingInitException $e) {
     die( "Missing required key in ini file: " . $e->getMessage());
 }
@@ -70,16 +73,10 @@ try {
 // It'd be nice to have a more generic function...
 function ldap_auth() {
 
-    // Change these to match the SNS LDAP server
-    $ldapconfig['host'] = 'ldaps://data.sns.gov/';
-//    $ldapconfig['host'] = 'ldaps://odyssey.sns.gov';
-    $ldapconfig['basedn'] = 'dc=sns,dc=ornl,dc=gov';
-    $ldapconfig['filter'] = "(&(objectClass=posixGroup)(cn=SNS_Neutron))";
-
     // This dn is probably specific to SNS...
-    $bind_dn = 'uid=' . $_SERVER['PHP_AUTH_USER'] . ',ou=users,' . $ldapconfig['basedn'];
+    $bind_dn = 'uid=' . $_SERVER['PHP_AUTH_USER'] . ',ou=users,' . LDAP_BASE_DN;
 
-    $ldap_link = ldap_connect( $ldapconfig['host']);
+    $ldap_link = ldap_connect( LDAP_HOST);
     if ($ldap_link == false)
     {
         throw new MwsAuthenticationException( "Failed to connect to LDAP server");
@@ -97,7 +94,7 @@ function ldap_auth() {
         throw new MwsAuthenticationException( "Failed to bind to DN='$bind_dn'.  Username/password combo probably wrong.");
     }
     
-    $search_result = ldap_search( $ldap_link, $ldapconfig['basedn'], $ldapconfig['filter']);
+    $search_result = ldap_search( $ldap_link, LDAP_BASE_DN, LDAP_FILTER);
     if ($search_result == false)
     {
         throw new MwsAuthorizationException( "LDAP search failed.");
