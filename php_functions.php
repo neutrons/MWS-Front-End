@@ -39,7 +39,7 @@ class MissingInitException extends Exception {};
 # Defaults to a dir that's one level up from the document root so
 # that files in it aren't directly accessible from a browser.
 if (! defined( 'SUPPORT_DIR'))
- { define ('SUPPORT_DIR', dirname( $_SERVER['DOCUMENT_ROOT']) . "/moab_support_files"); }
+ { define ('SUPPORT_DIR', dirname( $_SERVER['DOCUMENT_ROOT']) . DIRECTORY_SEPARATOR . "moab_support_files"); }
 
 # Read some necessary configuration constants from an ini file
 # (Slightly better than hard-coding them into the script)
@@ -48,7 +48,7 @@ if (! defined( 'SUPPORT_DIR'))
 # we won't run if they're not there.  These values are used for building up
 # the URL string in the curl calls and for the LDAP calls.
 try {  
-    $configs = parse_ini_file( SUPPORT_DIR . "/config.ini");
+    $configs = parse_ini_file( SUPPORT_DIR . DIRECTORY_SEPARATOR . "config.ini");
 
     # verify that the necessary values exist and then define constants for
     # them.  (The constants are probably overkill, but they don't hurt
