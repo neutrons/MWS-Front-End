@@ -35,59 +35,93 @@
     // job ID is specified as a GET var
     $_GET_lower = array_change_key_case($_GET, CASE_LOWER);
     $jobid = $_GET_lower['jobid'];
-    if ($jobid) {
-        $pdo = open_db();
-        $outfile = find_output_file( $pdo, $jobid);
+    if ( ! $jobid) {
+        // Job ID must be specified on the command line
+        header( 'HTTP/1.1 400 Bad Request');
+        echo "JobID parameter not specified in the requested URL<BR/>\n";
+        return;
+    }
 
-        if ($outfile) {
-            if (file_exists( $outfile)) {
-                header('Content-Description: File Transfer');
-                header('Content-Type: application/octet-stream');
-                header('Content-Disposition: attachment; filename='.basename($outfile));
-                header('Content-Transfer-Encoding: binary');
-                header('Expires: 0');
-                header('Cache-Control: must-revalidate');
-                header('Pragma: public');
-                header('Content-Length: ' . filesize($outfile));
-                ob_clean();
-                flush();
-                readfile($outfile);
+    try {
+    $pdo = open_db();
 
-                exit;  // success
-            }  else {  // file not found
-                echo "$outfile does not exist! <br/>";
-            }
-        } else {  // file not found.  404
-            echo "No outfile found for Job $jobid <br/>";
-        }
-    } else {  // job id not specified on command line
-        echo "Job ID not specified! <br/>";
+    // Check to see if the user is asking about one of his own jobs
+    $user = find_user( $pdo, $jobid);
+    if ($user === false) {
+        header( 'HTTP/1.1 404 Not Found');
+        echo "Job ID $jobid does not exist.<BR/>\n";
+        return;
+    }
+
+    if ($user != $_SERVER['PHP_AUTH_USER']) {
+        header( 'HTTP/1.1 403 Forbidden');
+        echo "Job ID $jobid not owned by  {$_SERVER['PHP_AUTH_USER']}.<BR/>\n";
+        // Strictly speaking, this is something of a security hole in that
+        // it confirms the existance of a job that the user doesn't own.
+        // That info is probably available elsewhere - showq and such - so
+        // we're probably ok here.
+        return;
     }
     
 
 
+    $outfile = find_output_file( $pdo, $jobid);
+
+    if ($outfile === false) {
+        // Should never actually get here since $user should also be false
+        // up above.  Just in case, though....
+        header( 'HTTP/1.1 404 Not Found');
+        echo "Job ID $jobid does not exist.<BR/>\n";
+        return;
+    }
+
+    if ( ! $outfile || ! file_exists( $outfile)) {
+        // file not found
+        header( 'HTTP/1.1 404 Not Found');
+        if ($outfile) {
+            echo "Job ID $jobid found, but its associated output file " .
+                "- $outfile - was not found.<BR/>\n";
+        } else {
+         echo "Job ID $jobid has no associated output file.<BR/>\n";
+        }
+        return;
+    }
+
+    if (filesize( $outfile) === false) {
+        // File exists, but we can't read it.  Probably a permissions or
+        // selinux issue.
+        header( 'HTTP/1.1 Internal Server Error');
+        echo "Cannot read $outfile<BR/>\n";
+        return;
+    }
+
+    // Success!
+    header('Content-Description: File Transfer');
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename='.basename($outfile));
+    header('Content-Transfer-Encoding: binary');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate');
+    header('Pragma: public');
+    header('Content-Length: ' . filesize($outfile));
+    ob_clean();
+    flush();
+    readfile($outfile);
+    return;    
+    
+    } catch (DbException $e) {
+        header( 'HTTP/1.1 Internal Server Error');
+        echo "Database Exception:<BR/>\n";
+        echo 'ErrorInfo: ' . $e->getErrorInfo() . "<BR/>\n";
+        echo 'Message: ' . $e->getMessage() . "<BR/>\n";
+        return;
+    } catch (Exception $e) {
+        header( 'HTTP/1.1 Internal Server Error');
+        echo 'Unknown Exception:<BR/>\n';
+        echo 'Message: ' . $e->getMessage() . "<BR/>\n";
+    }
+
+   
+
 ?>
-
-<?php
-/*
-<hr />
-<hr />
-<form action="index.php" method="post">
-<p>
-Email address:<br />
-<input type="text" name="email" size="20" maxlength="50" value="" />
-</p>
-<p>
-Password:<br />
-<input type="password" name="pswd" size="20" maxlength="15" value="" />
-</p>
-<p>
-<input type="submit" name="subscribe" value="subscribe!" />
-<input type="submit" name="cancel" value="cancel!" />
-</p>
-</form>
-  
-*/
-?>  
-
 
