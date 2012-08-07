@@ -46,7 +46,7 @@ function open_db() {
         throw new DbException (  $pdo->errorInfo(), "Error opening (or creating) " . $dbFile);
     }
 
-    if ( $pdo->exec( 'CREATE TABLE IF NOT EXISTS ' . TABLE_NAME . ' (jobId TEXT, filename TEXT, PRIMARY KEY (jobId))') === false) {
+    if ( $pdo->exec( 'CREATE TABLE IF NOT EXISTS ' . TABLE_NAME . ' (jobId TEXT, username TEXT, filename TEXT, PRIMARY KEY (jobId))') === false) {
         throw new DbException (  $pdo->errorInfo(), 'Error creating ' . TABLE_NAME . ' table');
     }
 
@@ -57,15 +57,15 @@ function open_db() {
 # Returns nothing on success.  Throws an exception if there was a problem
 # pdo is a PDO object (with an already opened database).
 # jobId and outputFile are both strings
-function add_row( $pdo, $jobId, $outputFile) {
-    if ($pdo->exec( 'INSERT INTO ' . TABLE_NAME . " VALUES ( \"$jobId\", \"$outputFile\")") === false) {
+function add_row( $pdo, $jobId, $username, $outputFile) {
+    if ($pdo->exec( 'INSERT INTO ' . TABLE_NAME . " VALUES ( \"$jobId\", \"$username\", \"$outputFile\")") === false) {
         throw new DbException (  $pdo->errorInfo(), 'Error inserting row in ' . TABLE_NAME . ' table');
     }
 }
 
 
 # Searches the table for the specified jobID and returns the name of the
-# associated output file.  Returns an empty string if the id doesn't exist
+# associated output file.  Returns boolean false if the id doesn't exist
 # pdo is a PDO object (with an already opened database).
 function find_output_file( $pdo, $jobId) {
 
@@ -79,6 +79,8 @@ function find_output_file( $pdo, $jobId) {
     $row = $results->fetch();
     if ($row !== false) {
         $outfile = $row['filename'];
+    } else {
+        $outfile = false;
     }
 
     // This is a sanity check.  There should be at most a single row returned.
@@ -90,5 +92,37 @@ function find_output_file( $pdo, $jobId) {
     $results->closeCursor();
     return $outfile;
 }
+
+# Searches the table for the specified jobID and returns the username 
+# associated with it.  Returns boolean FALSE if the id doesn't exist
+# pdo is a PDO object (with an already opened database).
+function find_user( $pdo, $jobId) {
+
+    $user = '';  // empty string
+    $qstring = 'SELECT username from ' . TABLE_NAME .  ' WHERE jobId == \'' . $jobId . '\'';
+    $results = $pdo->query( $qstring);
+    if ($results === false) {
+        throw new DbException (  $pdo->errorInfo(), 'Error querying ' . TABLE_NAME . ' for job ID ' . $jobId);
+    }
+
+    $row = $results->fetch();
+    if ($row !== false) {
+        $user = $row['username'];
+    } else {
+        $user = false;
+    }
+
+
+    // This is a sanity check.  There should be at most a single row returned.
+    $row = $results->fetch();
+    if ($row !== false) {
+        throw new DbException( $pdo->errorInfo(), 'Multiple results returned from query for job ID ' . $jobId);
+    }
+
+    $results->closeCursor();
+    return $user;
+}
+
+
 
 ?>
