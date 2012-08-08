@@ -46,7 +46,10 @@ function open_db() {
         throw new DbException (  $pdo->errorInfo(), "Error opening (or creating) " . $dbFile);
     }
 
-    if ( $pdo->exec( 'CREATE TABLE IF NOT EXISTS ' . TABLE_NAME . ' (jobId TEXT, username TEXT, filename TEXT, PRIMARY KEY (jobId))') === false) {
+    $stmt = 'CREATE TABLE IF NOT EXISTS ' . TABLE_NAME .
+        ' (jobId TEXT, username TEXT, filename TEXT, when_added INTEGER, PRIMARY KEY (jobId))';
+    // SQLite doesn't have a specific date type.  We're using integer seconds (Unix time)
+    if ( $pdo->exec( $stmt) === false) {
         throw new DbException (  $pdo->errorInfo(), 'Error creating ' . TABLE_NAME . ' table');
     }
 
@@ -58,7 +61,8 @@ function open_db() {
 # pdo is a PDO object (with an already opened database).
 # jobId and outputFile are both strings
 function add_row( $pdo, $jobId, $username, $outputFile) {
-    if ($pdo->exec( 'INSERT INTO ' . TABLE_NAME . " VALUES ( \"$jobId\", \"$username\", \"$outputFile\")") === false) {
+    $stmt = 'INSERT INTO ' . TABLE_NAME . " VALUES ( \"$jobId\", \"$username\", \"$outputFile\", strftime('%s', 'now'))";
+    if ($pdo->exec( $stmt) === false) {
         throw new DbException (  $pdo->errorInfo(), 'Error inserting row in ' . TABLE_NAME . ' table');
     }
 }
