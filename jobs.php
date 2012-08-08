@@ -2,6 +2,7 @@
 
     // Import some functions we're going to need
     require 'php_functions.php';
+    require 'db_functions.php';
     
     /* -------------- Main body -------------- */  
 
@@ -70,6 +71,15 @@
 
         list( $http_code, $response_body) = submit_job( $body);
         // Success codes are 201 and 202.  Errors are 4xx...
+        if ($http_code == 201 || $http_code == 202) {
+            // Add the job id, user and output file to the database
+            $json_vars = json_decode( $response_body, true);
+            $jobID = $json_vars['id'];
+            $outfile = $_GET['outfile'];
+            $pdo = open_db();
+            add_row( $pdo, $jobID, $_SERVER['PHP_AUTH_USER'], $outfile);
+            # TODO: Should we enforce the existance of outfile?
+        }
         if ($http_code == 201)
             header('HTTP/1.1 201 Created');
         elseif ($http_code == 202)
