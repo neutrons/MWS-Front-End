@@ -90,33 +90,47 @@
     if (filesize( $outfile) === false) {
         // File exists, but we can't read it.  Probably a permissions or
         // selinux issue.
-        header( 'HTTP/1.1 Internal Server Error');
+        header( 'HTTP/1.1 500 Internal Server Error');
         echo "Cannot read $outfile<BR/>\n";
         return;
     }
 
     // Success!
-    header('Content-Description: File Transfer');
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename='.basename($outfile));
-    header('Content-Transfer-Encoding: binary');
-    header('Expires: 0');
-    header('Cache-Control: must-revalidate');
-    header('Pragma: public');
-    header('Content-Length: ' . filesize($outfile));
-    ob_clean();
-    flush();
-    readfile($outfile);
+
+    // Check the PHP_SELF var.  If we were called as "filecheck", then
+    // we don't want to download the file, just test for its existance.
+    // (Which we've successfully done if we've gotten this far.)
+    $tokens = explode( '/', $_SERVER['PHP_SELF']);
+    $last = end($tokens);
+    if ($last == 'filecheck') {
+        // File exists.  Returing a 200 status code is sufficient
+        header( 'HTTP/1.1 200 OK');
+        echo "$outfile: " . filesize($outfile) . " bytes<br/>\n";
+    } else {
+        // Actually transfer the file
+        header( 'HTTP/1.1 200 OK');
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename='.basename($outfile));
+        header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($outfile));
+        ob_clean();
+        flush();
+        readfile($outfile);
+    }
     return;    
     
     } catch (DbException $e) {
-        header( 'HTTP/1.1 Internal Server Error');
+        header( 'HTTP/1.1 500 Internal Server Error');
         echo "Database Exception:<BR/>\n";
         echo 'ErrorInfo: ' . $e->getErrorInfo() . "<BR/>\n";
         echo 'Message: ' . $e->getMessage() . "<BR/>\n";
         return;
     } catch (Exception $e) {
-        header( 'HTTP/1.1 Internal Server Error');
+        header( 'HTTP/1.1 500 Internal Server Error');
         echo 'Unknown Exception:<BR/>\n';
         echo 'Message: ' . $e->getMessage() . "<BR/>\n";
     }
