@@ -68,10 +68,25 @@ try {
     die( "Missing required key in ini file: " . $e->getMessage());
 }
 
-
 // Note: This is unfortunately rather specific to the SNS ldap server
 // It'd be nice to have a more generic function...
+// Note: successful authentication is indicated by the function simply
+// returning.  If authentication is unsuccessful, the function throws
+// one of the exceptions defined above.
 function ldap_auth() {
+
+    // Check the session variable - if the session is valid, skip the
+    // actual authentication unless it's been more than a minute
+    // since the last one  (Hopefully, this will speed things up when
+    // the client hits us with lots of connections.)
+    if (isset($_SESSION['ldap_auth_time']))
+    {
+        if (time() - $_SESSION['ldap_auth_time'] < 60)
+        {
+            // don't bother authenticating
+            return;
+        }
+    }
 
     // This dn is probably specific to SNS...
     $bind_dn = 'uid=' . $_SERVER['PHP_AUTH_USER'] . ',ou=users,' . LDAP_BASE_DN;
@@ -111,7 +126,9 @@ function ldap_auth() {
     }
     
     // If we make it here, it's success.  We can just return.  We threw one of the
-    // exceptions listed above if there was an error.
+    // exceptions listed above if there was an error.  Update the session variable
+    // so we don't have to hit the LDAP server next time
+    $_SESSION['ldap_auth_time'] = time();
     return;
 }
 

@@ -7,7 +7,11 @@
     /* -------------- Main body -------------- */  
 
     try {
-    
+   
+    if (session_start() == false) {
+        error_log( "Failed to start session. This shouldn't happen.");
+    } 
+
     // Check for the user name and password values
     if ( ! isset( $_SERVER['PHP_AUTH_USER']) ||
          ! isset( $_SERVER['PHP_AUTH_PW']) )
@@ -96,50 +100,6 @@
     }
     
 
-/**************
-    echo "Server vars:<br />";
-    foreach( $_SERVER as $var => $value) {
-        echo "$var => $value <br />";
-    }
-
-    echo "<hr />";   
-    echo "GET vars:<br />";
-    foreach( $_GET as $var => $value) {
-        echo "$var => $value <br />";
-    }
-
-    echo "<hr />";   
-    echo "POST vars:<br />";
-    foreach( $_POST as $var => $value) {
-        echo "$var => $value <br />";
-    }
- 
-
-    echo "<hr />";   
-    echo "Cookie vars:<br />";
-    foreach( $_COOKIE as $var => $value) {
-        echo "$var => $value <br />";
-    }   
-
-    echo "<hr />";   
-    echo "File vars:<br />";
-    foreach( $_FILES as $var => $value) {
-        echo "$var => $value <br />";
-    }   
-
-    echo "<hr />";   
-    echo "Request headers:<br />";
-    $headers = getallheaders();
-    foreach( $headers as $var => $value) {
-        echo "$var => $value <br />";
-    }   
-
-    echo "<hr />";
-    echo "Request body:<br />";
-    $body = file_get_contents('php://input');
-    var_dump( json_decode( $body));
-********************/
-
     } catch (MwsAuthorizationException $e)
     {
     header( 'HTTP/1.1 401');
@@ -155,27 +115,4 @@
     echo $e->getMessage();
     }
 ?>
-
-<?php
-/*
-<hr />
-<hr />
-<form action="index.php" method="post">
-<p>
-Email address:<br />
-<input type="text" name="email" size="20" maxlength="50" value="" />
-</p>
-<p>
-Password:<br />
-<input type="password" name="pswd" size="20" maxlength="15" value="" />
-</p>
-<p>
-<input type="submit" name="subscribe" value="subscribe!" />
-<input type="submit" name="cancel" value="cancel!" />
-</p>
-</form>
-  
-*/
-?>  
-
 

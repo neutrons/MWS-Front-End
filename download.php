@@ -11,6 +11,7 @@
 
 
     /* -------------- Main body -------------- */
+    session_start();
     
     // Check for the user name and password values
     if ( ! isset( $_SERVER['PHP_AUTH_USER']) ||
