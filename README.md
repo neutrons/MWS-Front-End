@@ -21,12 +21,12 @@ This is a development branch that was forked off the main branch.  It's being us
     * Directory is location for file upload & download for this transaction
     * It's not yet clear what actions the server will have to take when a new transaction is started, but it will at least have to create the directory and probably add a few rows to a database
 3. Client uploads script to run
-    * Client only specifies the file name, not the full path.  Server will store it in the directory created for this transaction
-_Repeat step 3 as necessary_
+    * Client only specifies the file name, not the full path.  Server will store it in the directory created for this transaction  
+_Repeat step 3 as necessary_  
 4. Client submits job to MWS
-    * Server will intercept return value from MWS and store the job ID in the database in addition to passing it back to the client
-_Repeat step 4 as necessary_
-_Wait for jobs to complete_
+    * Server will intercept return value from MWS and store the job ID in the database in addition to passing it back to the client  
+_Repeat step 4 as necessary_  
+_Wait for jobs to complete_  
 5. Client downloads output files
 6. Client closes transaction
     * On transaction close, server will delete directory and everything in it and purge transaction info from the database
