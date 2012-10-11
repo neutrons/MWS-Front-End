@@ -1,2 +1,4 @@
 # text editor autosave files
 *~
+# Eclipse project file
+.project
