@@ -1,8 +1,9 @@
 <?php
 
     // Import some functions we're going to need
-    require 'php_functions.php';
-    require 'db_functions.php';
+    require_once 'ini_file.php';
+    require_once 'php_functions.php';
+    require_once 'db_functions.php';
     
     /* -------------- Main body -------------- */  
 
@@ -38,7 +39,8 @@
         
         // Check the request URI.  Requests for individual jobs
         // will have a path of ".../jobs/<job-id>
-        $dirs = explode( "/", $_SERVER['REQUEST_URI']);
+        $short_uri = explode( "?", $_SERVER['REQUEST_URI']); // split off the query string (if there is one)
+        $dirs = explode( "/", $short_uri[0]);
         if ($dirs[ count($dirs) - 1] == "jobs") {
             // Request for all jobs....
             list( $http_code, $query_response) = get_jobs($_SERVER['PHP_AUTH_USER']);
@@ -46,7 +48,7 @@
             header( sprintf( "HTTP/1.1 %d", $http_code));
             echo $query_response;     
         }
-        if ($dirs[ count($dirs) - 2] == "jobs") {
+        elseif ($dirs[ count($dirs) - 2] == "jobs") {
             // Request for a specific jobID...
             list($http_code, $query_response) = get_job( $dirs[count( $dirs) - 1], $_SERVER['PHP_AUTH_USER']);
             // Success code is and 200.  Errors are 4xx...
