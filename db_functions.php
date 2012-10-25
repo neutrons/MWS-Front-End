@@ -90,17 +90,20 @@ function open_db() {
 # pdo is a PDO object (with an already opened database).
 # transId is an integer
 function check_transaction( $pdo, $transId, $username) {
-	$qstring = 'SELECT * FROM ' . TRANS_TABLE . " WHERE transId == '$transId'";
-	$results = $pdo->query( $qstring);
-	if ($results == false) {
+	$stmt = $pdo.prepare('SELECT * FROM ' . TRANS_TABLE . ' WHERE transId == ?');
+	if ($stmt.execute( array( $transId)) === false) {
 		throw new DbException ( $pdo->errorInfo(), 'Error searching for transaction in ' . TRANS_TABLE . 'table');
 	}
 	
-	$rows = $results->fetchAll();
+	$rows = $stmt->fetchAll();
 	if (count( $rows) == 1) {
 		if ($rows[0]['username'] == $username) {
 			return true;	
 		}
+	} elseif (count( $rows) > 1) {
+	    // This is a sanity check.  There should be at most a single row returned.
+	    throw new DbException( $pdo->errorInfo(), 'Multiple results returned from query for transaction ID ' . $transId);
+	    
 	}
 	
 	return false;
@@ -110,13 +113,18 @@ function check_transaction( $pdo, $transId, $username) {
 # (throws an exception if the transaction doesn't exist)
 # pdo is a PDO object (with an already opened database).
 function get_dir_name( $pdo, $transId) {
-	$qstring = 'SELECT * FROM ' . TRANS_TABLE . " WHERE transId == '$transId'";
-	$results = $pdo->query( $qstring);
-	$row = $results->fetch();
+	$stmt = pdo.prepare('SELECT * FROM ' . TRANS_TABLE . ' WHERE transId == ?');
+	if ($stmt.execute( array( $transId)) === false) {
+		throw new DbException( $pdo->errorInfo(), 'Error querying ' . TRANS_TABLE . ' table');
+	}
+	
+	$row = $stmt->fetch();
 	if ($row == FALSE) {
 		throw new DbException ( $pdo->errorInfo(), "Transaction ID $transId not found in " . TRANS_TABLE . 'table');
 		return "";  // This line should never execute
 	}
+	
+	$stmt->closeCursor();
 	
 	return $row['directory'];
 }
@@ -134,6 +142,7 @@ function add_transaction( $pdo, $username, $directoryName) {
 	if ($stmt->execute( array( $username, $directoryName)) === false) {
 		throw new DbException( $pdo->errorInfo(), 'Error inserting row in ' . TRANS_TABLE . ' table');
 	}
+	$stmt->closeCursor();
 	
 	# Get the transaction ID
 	# TODO: Is there a better way than executing another query?!?
@@ -155,6 +164,7 @@ function add_job_id( $pdo, $transId, $jobId) {
 	if ($stmt->execute( array( $transId, $jobId)) === false) {
 		throw new DbException( $pdo->errorInfo(), 'Error inserting row in ' . JOB_TABLE . ' table');
 	}
+	$stmt->closeCursor();
 }
 
 # Removes a transaction from the database
@@ -166,7 +176,62 @@ function remove_transaction( $pdo, $transId) {
 	if ($stmt->execute( array( $transId)) === false) {
 		throw new DbException( $pdo->errorInfo(), 'Error deleting row from ' . TRANS_TABLE . ' table');
 	}
+	$stmt->closeCursor();
 }
+
+
+# Searches the table for the specified TransID and returns the username 
+# associated with it.  Returns boolean FALSE if the trans id doesn't exist
+# pdo is a PDO object (with an already opened database).
+function find_user( $pdo, $transId) {
+	$user = false;  // value to be returned - assume failure
+	$stmt = $pdo->prepare( 'SELECT username from ' . TRANS_TABLE .  ' WHERE transId == ?');
+	if ($stmt->execute( array( $transId)) === false) {
+		throw new DbException( $pdo->errorInfo(), 'Error querying ' . TRANS_TABLE . ' table');
+	}
+	
+    $row = $stmt->fetch();
+    if ($row !== false) {
+        $user = $row['username'];
+    }
+    
+    // This is a sanity check.  There should be at most a single row returned.
+    $row = $stmt->fetch();
+    if ($row !== false) {
+        throw new DbException( $pdo->errorInfo(), 'Multiple results returned from query for transaction ID ' . $transId);
+    }
+
+    $stmt->closeCursor();
+    return $user;
+}
+
+# Searches the table for the specified transID and returns the name of the
+# associated directory.  Returns boolean false if the trans id doesn't exist
+# pdo is a PDO object (with an already opened database).
+function find_directory( $pdo, $transId) {
+
+    $dir = false;  // value to be returned - assume failure
+    $stmt = $pdo->prepare('SELECT directory from ' . TRANS_TABLE .  ' WHERE transId == ?');
+    if ($stmt->execute( array( $transId)) === false) {
+        throw new DbException (  $pdo->errorInfo(), 'Error querying ' . TABLE_NAME . ' for transaction ID ' . $transId);
+    }
+
+    $row = $stmt->fetch();
+    if ($row !== false) {
+        $dir = $row['directory'];
+    }
+    
+    // This is a sanity check.  There should be at most a single row returned.
+    $row = $stmt->fetch();
+    if ($row !== false) {
+        throw new DbException( $pdo->errorInfo(), 'Multiple results returned from query for transaction ID ' . $transId);
+    }
+
+    $stmt->closeCursor();
+    return $dir;
+}
+
+
 
 /*************************************
 
@@ -211,35 +276,6 @@ function find_output_file( $pdo, $jobId) {
 }
 
 
-# Searches the table for the specified jobID and returns the username 
-# associated with it.  Returns boolean FALSE if the id doesn't exist
-# pdo is a PDO object (with an already opened database).
-function find_user( $pdo, $jobId) {
-
-    $user = '';  // empty string
-    $qstring = 'SELECT username from ' . TABLE_NAME .  ' WHERE jobId == \'' . $jobId . '\'';
-    $results = $pdo->query( $qstring);
-    if ($results === false) {
-        throw new DbException (  $pdo->errorInfo(), 'Error querying ' . TABLE_NAME . ' for job ID ' . $jobId);
-    }
-
-    $row = $results->fetch();
-    if ($row !== false) {
-        $user = $row['username'];
-    } else {
-        $user = false;
-    }
-
-
-    // This is a sanity check.  There should be at most a single row returned.
-    $row = $results->fetch();
-    if ($row !== false) {
-        throw new DbException( $pdo->errorInfo(), 'Multiple results returned from query for job ID ' . $jobId);
-    }
-
-    $results->closeCursor();
-    return $user;
-}
 
 ***************************************/
 

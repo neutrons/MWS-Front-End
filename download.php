@@ -32,22 +32,22 @@
     // we know we're good to go.
     ldap_auth();
     
-    // The file to be downloaded is looked up using the job ID and the
-    // job ID is specified as a GET var
+    // The file/directory we're interested in is looked up using the transaction
+    // ID, which is specified as a GET var
     $_GET_lower = array_change_key_case($_GET, CASE_LOWER);
-    $jobid = $_GET_lower['jobid'];
-    if ( ! $jobid) {
-        // Job ID must be specified on the command line
+    $transId = $_GET_lower['transid'];
+    if ( ! $transId) {
+        // Transaction ID must be specified on the command line
         header( 'HTTP/1.1 400 Bad Request');
-        echo "JobID parameter not specified in the requested URL<BR/>\n";
+        echo "TransID parameter not specified in the requested URL<BR/>\n";
         return;
     }
 
     try {
     $pdo = open_db();
 
-    // Check to see if the user is asking about one of his own jobs
-    $user = find_user( $pdo, $jobid);
+    // Check to see if the user is asking about one of his own transactions
+    $user = find_user( $pdo, $transId);
     if ($user === false) {
         header( 'HTTP/1.1 404 Not Found');
         echo "Job ID $jobid does not exist.<BR/>\n";
