@@ -63,10 +63,11 @@ function recursive_rm( $dirName) {
 			if (($entry == '.') || ($entry == '..')) {
 				continue;  // trying to recursively delete .. would cause a lot of problems...
 			}
-			if (is_dir( $entry)) {
-				recursive_rm ( $entry);
+			$fullPathName = $dirName . DIRECTORY_SEPARATOR . $entry;
+			if (is_dir( $fullPathName)) {
+				recursive_rm ( $fullPathName);
 			} else {
-				if (unlink ( $entry) == false) {
+				if (unlink ( $fullPathName) == false) {
 					# TODO: What do we do if the file can't be deleted?!?
 				}
 			}
@@ -91,6 +92,10 @@ function stop_transaction($transId) {
 	# Remove the directory (and its contents) from the filesystem	
 	$dirName = get_dir_name( $pdo, $transId);
 	recursive_rm( $dirName);
+	// NOTE: Now that I think about it, I suspect recursive_rm won't work because any output
+	// files that are created will be owned by the user and apache won't have permissions to
+	// delete them.  A possible solution is to change the ownership of everything over to the
+	// user and then submit a job to MWS that does the "rm -rf" 
 	
 	remove_transaction( $pdo, $transId);
 }
