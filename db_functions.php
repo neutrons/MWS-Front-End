@@ -90,8 +90,8 @@ function open_db() {
 # pdo is a PDO object (with an already opened database).
 # transId is an integer
 function check_transaction( $pdo, $transId, $username) {
-	$stmt = $pdo.prepare('SELECT * FROM ' . TRANS_TABLE . ' WHERE transId == ?');
-	if ($stmt.execute( array( $transId)) === false) {
+	$stmt = $pdo->prepare('SELECT * FROM ' . TRANS_TABLE . ' WHERE transId == ?');
+	if ($stmt->execute( array( $transId)) === false) {
 		throw new DbException ( $pdo->errorInfo(), 'Error searching for transaction in ' . TRANS_TABLE . 'table');
 	}
 	
@@ -113,8 +113,8 @@ function check_transaction( $pdo, $transId, $username) {
 # (throws an exception if the transaction doesn't exist)
 # pdo is a PDO object (with an already opened database).
 function get_dir_name( $pdo, $transId) {
-	$stmt = pdo.prepare('SELECT * FROM ' . TRANS_TABLE . ' WHERE transId == ?');
-	if ($stmt.execute( array( $transId)) === false) {
+	$stmt = $pdo->prepare('SELECT * FROM ' . TRANS_TABLE . ' WHERE transId == ?');
+	if ($stmt->execute( array( $transId)) === false) {
 		throw new DbException( $pdo->errorInfo(), 'Error querying ' . TRANS_TABLE . ' table');
 	}
 	
