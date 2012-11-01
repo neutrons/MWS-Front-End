@@ -131,12 +131,8 @@ if (! array_key_exists( 'action', $_GET_lower)) {
 	header( 'HTTP/1.1 400 Bad Request');
 	echo "No action specified.";
 	return;
-} else {
-	$action = strtolower( $_GET_lower['action']);
 }
-
-$action = strtolower( $action);
-
+$action = strtolower( $_GET_lower['action']);
 if ($action == 'start') {
 	$transData = start_transaction();
 	echo json_encode( $transData, JSON_PRETTY_PRINT);
@@ -146,8 +142,13 @@ if ($action == 'start') {
 	
 } elseif ($action == 'stop') {
 	// Get the transaction ID from the query string
-	$_GET_lower = array_change_key_case($_GET, CASE_LOWER);
-    $transId = $_GET_lower['transid'];
+	if (! array_key_exists( 'transid', $_GET_lower)) {
+		header( 'HTTP/1.1 400 Bad Request');
+		echo "No transaction ID specified.";
+		return;
+	}
+	
+	$transId = strtolower( $_GET_lower['transid']);
 	
 	// Stop the transaction
 	stop_transaction( $transId);

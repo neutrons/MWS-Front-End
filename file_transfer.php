@@ -50,10 +50,14 @@
     $_POST_lower = array_change_key_case( $_POST, CASE_LOWER);
     $transId = "";  // empty strings are equivalent to boolean false
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    	$transId = $_GET_lower['transid'];
+		if ( array_key_exists( 'transid', $_GET_lower)) {
+    		$transId = $_GET_lower['transid'];
+		}
     }
     elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    	$transId = $_POST_lower['transid'];
+		if ( array_key_exists( 'transid', $_POST_lower)) {
+    		$transId = $_POST_lower['transid'];
+		}
     }
     if ( ! $transId) {
         // Transaction ID must be specified on the command line
@@ -88,9 +92,9 @@
 			header( 'HTTP/1.1 400 Bad Request');
 			echo "No action specified.";
 			return;
-		} else {
-			$action = strtolower( $_GET_lower['action']);
 		}
+		
+		$action = strtolower( $_GET_lower['action']);
 		
 		// Handle file download requests
 		if ($action == "download") {
