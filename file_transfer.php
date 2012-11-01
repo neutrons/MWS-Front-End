@@ -84,13 +84,13 @@
 	// uploads are posts, downloads & queries are gets
 	if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 		// Check the 'action' GET var: should be either 'download' or query
-		$action = $_GET_lower['action'];
-		if (! $action) {
+		if (! array_key_exists( 'action', $_GET_lower)) {
 			header( 'HTTP/1.1 400 Bad Request');
-        	echo "No action specified.";
-        	return;
+			echo "No action specified.";
+			return;
+		} else {
+			$action = strtolower( $_GET_lower['action']);
 		}
-		$action = strtolower( $action);
 		
 		// Handle file download requests
 		if ($action == "download") {

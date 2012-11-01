@@ -125,14 +125,26 @@ ldap_auth();
 // error
 $tokens = explode('/', $_SERVER['PHP_SELF']);
 $last = end($tokens);
-if ($last == 'start_transaction') {
+
+$_GET_lower = array_change_key_case($_GET, CASE_LOWER);
+if (! array_key_exists( 'action', $_GET_lower)) {
+	header( 'HTTP/1.1 400 Bad Request');
+	echo "No action specified.";
+	return;
+} else {
+	$action = strtolower( $_GET_lower['action']);
+}
+
+$action = strtolower( $action);
+
+if ($action == 'start') {
 	$transData = start_transaction();
 	echo json_encode( $transData, JSON_PRETTY_PRINT);
 	
 	// Return a 200 status code along with the new transaction ID
 	header('HTTP/1.1 200 OK');
 	
-} elseif ($last == 'stop_transaction') {
+} elseif ($action == 'stop') {
 	// Get the transaction ID from the query string
 	$_GET_lower = array_change_key_case($_GET, CASE_LOWER);
     $transId = $_GET_lower['transid'];
@@ -143,8 +155,9 @@ if ($last == 'start_transaction') {
 	// Return a 200...
 	header('HTTP/1.1 200 OK');
 } else {
-	// Unknown URL - return a 404...
-	header( 'HTTP/1.1 404 Not Found');
+	// Unknown action
+	header( 'HTTP/1.1 400 Bad Request');
+	echo 'Unrecognized action: ' . $action ;
 }
 
 ?>
