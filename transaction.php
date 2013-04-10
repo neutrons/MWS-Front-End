@@ -104,15 +104,18 @@ function stop_transaction($transId) {
 session_start();
 
 // Check for the user name and password values
-if (!isset ($_SERVER['PHP_AUTH_USER']) || !isset ($_SERVER['PHP_AUTH_PW'])) {
-	// Most browsers will see the following headers and be
-	// smart enough to ask the user for name and password and
-	// then retry.  Web services apps probably won't, but then
-	// they should have been smart enough to send the auth
-	// info without being prompted for it.
-	header('WWW-Authenticate: Basic Realm="Authentication"');
-	header('HTTP/1.1 401 Unauthorized');
-	return;
+if ( ! isset( $_SERVER['PHP_AUTH_USER'])       ||
+     ! isset( $_SERVER['PHP_AUTH_PW'])         ||
+     (strlen( $_SERVER['PHP_AUTH_USER']) == 0) ||
+     (strlen( $_SERVER['PHP_AUTH_PW']) == 0) ) {
+    // Most browsers will see the following headers and be
+    // smart enough to ask the user for name and password and
+    // then retry.  Web services apps probably won't, but then
+    // they should have been smart enough to send the auth
+    // info without being prompted for it.
+    header( 'WWW-Authenticate: Basic Realm="Authentication"');
+    header( 'HTTP/1.1 401 Unauthorized');
+    return;
 }
 
 // Authenticate to the LDAP server.  ldap_auth() throws

@@ -14,9 +14,10 @@
     } 
 
     // Check for the user name and password values
-    if ( ! isset( $_SERVER['PHP_AUTH_USER']) ||
-         ! isset( $_SERVER['PHP_AUTH_PW']) )
-    {
+    if ( ! isset( $_SERVER['PHP_AUTH_USER'])       ||
+         ! isset( $_SERVER['PHP_AUTH_PW'])         ||
+         (strlen( $_SERVER['PHP_AUTH_USER']) == 0) ||
+         (strlen( $_SERVER['PHP_AUTH_PW']) == 0) ) {
         // Most browsers will see the following headers and be
         // smart enough to ask the user for name and password and
         // then retry.  Web services apps probably won't, but then
@@ -33,8 +34,7 @@
     ldap_auth();
     
     // Check request method (GET or PUT)
-    if ($_SERVER['REQUEST_METHOD'] == 'GET')
-    {
+    if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         // Various "get job" functions here...
         
         // Check the request URI.  Requests for individual jobs
@@ -62,16 +62,13 @@
         // the user in the auth header
         $body = file_get_contents('php://input');
         $json_vars = json_decode( $body, true);
-        if ( isset( $json_vars['user']))
-        {
-            if ($json_vars['user'] != $_SERVER['PHP_AUTH_USER'])
-            {
+        if ( isset( $json_vars['user'])) {
+            if ($json_vars['user'] != $_SERVER['PHP_AUTH_USER']) {
                 $msg = "User name in request body doesn't match user name in authorization header";
                 throw new MwsAuthorizationException( $msg);
             }
         }
-        else
-        {
+        else {
             throw new MwsErrorCodeException( "JSON body must contain a user field.");
         }
 
@@ -95,20 +92,17 @@
 
         echo $response_body;
     }
-    else
-    {
+    else {
         $msg = "Unrecognized request method: " . $_SERVER['REQUEST_METHOD'];
         throw new MwsErrorCodeException( $msg);
     }
     
 
-    } catch (MwsAuthorizationException $e)
-    {
+    } catch (MwsAuthorizationException $e) {
     header( 'HTTP/1.1 401');
     echo "MwsAuthorizationException  ";
     echo $e->getMessage();
-    } catch (MwsAuthenticationException $e)
-    {
+    } catch (MwsAuthenticationException $e) {
     header( 'HTTP/1.1 401');
     echo "MwsAuthenticationException  ";
     echo $e->getMessage();
