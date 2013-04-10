@@ -1,5 +1,8 @@
 <?php
 
+# NOTE: This file is deprecated and should probably be deleted.  See file_transfer.php
+# for the new hotness.
+
 # A note about SELinux:  If SELinux is enabled, then it's very likely that
 # any files we want to download will need a specific security context in
 # order for httpd to read them.  You can set the default context on files

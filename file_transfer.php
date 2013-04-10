@@ -5,7 +5,10 @@
  * Code and functions related to file transfers (upload, download and also queries)
  * 
  * Query strings for downloads will need 3 variables: TransID=xxxx&Action=download&File=zzzzz
- * Query strings for file queries will need 2 (and note that Action is different):
+ * Note that File should just contain the filename, not the full pathname.  The actual
+ * directory the file is stored in is determinied from the TransID
+ * 
+ * Query strings for file queries will need 2 variables (and note that Action is different):
  * TransID=xxxx&Action=Query
  * 
  * 
@@ -153,6 +156,12 @@
 			    }
 
 			    closedir($handle);
+			    
+			    // If we just $listing now, we'd only get an array, not a complete
+			    // JSON object (ie: a name/value pair enclosed in braces).
+			    // Converting listing into a PHP associative array results in an
+			    // actual object when it's encoded.
+			    $listing = array( "filenames" => $listing);
 			    echo json_encode( $listing, JSON_PRETTY_PRINT);
 			} else {
 				// couldn't open the directory
