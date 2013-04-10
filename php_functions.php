@@ -70,6 +70,10 @@ function ldap_auth() {
     // Attempt to bind (thus verifying user name and password)
     if ( ! ldap_bind( $ldap_link, $bind_dn, $_SERVER['PHP_AUTH_PW']))
     {
+    	error_log( "Bind Failed");
+    	$msg = sprintf( "Host: %s", LDAP_HOST);
+    	error_log( "$msg");
+    	error_log( "DN: $bind_dn");
         throw new MwsAuthenticationException( "Failed to bind to DN='$bind_dn'.  Username/password combo probably wrong.");
     }
     
