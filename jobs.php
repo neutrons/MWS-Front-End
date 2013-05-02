@@ -80,7 +80,9 @@
             $jobID = $json_vars['id'];
             $outfile = $_GET['outfile'];
             $pdo = open_db();
-            add_row( $pdo, $jobID, $_SERVER['PHP_AUTH_USER'], $outfile);
+            # Currently, add_row() is commented out in db_function.php.  I'm
+            # not sure why, but we obviously can't call it until it's restored.
+            #add_row( $pdo, $jobID, $_SERVER['PHP_AUTH_USER'], $outfile);
             # TODO: Should we enforce the existance of outfile?
         }
         if ($http_code == 201)
